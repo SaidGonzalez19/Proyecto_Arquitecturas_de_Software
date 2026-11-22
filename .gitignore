@@ -1,1 +1,16 @@
+# Archivos de macOS
 .DS_Store
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Visual Studio Code
+.vscode/
+
+# Archivos generados al compilar Java
+target/
+out/
+*.class

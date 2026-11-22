@@ -17,3 +17,7 @@ Repositorio oficial del equipo para las entregas del proyecto de la asignatura A
     <td align="center"><b>Pacheco Pacheco Ramón Alonso</b></td>
   </tr>
 </table>
+
+## Documentación
+
+- [Etapa 1. Definición del proyecto y acuerdos de trabajo](docs/01-definicion-proyecto.md): alcance del Gestor de Productos, requisitos, arquitectura prevista, responsabilidades y convenciones del equipo.

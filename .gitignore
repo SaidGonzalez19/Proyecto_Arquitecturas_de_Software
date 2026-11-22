@@ -14,3 +14,6 @@
 target/
 out/
 *.class
+
+# Conexión local a MySQL
+/application-local.properties

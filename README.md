@@ -21,3 +21,22 @@ Repositorio oficial del equipo para las entregas del proyecto de la asignatura A
 ## Documentación
 
 - [Etapa 1. Definición del proyecto y acuerdos de trabajo](docs/01-definicion-proyecto.md): alcance del Gestor de Productos, requisitos, arquitectura prevista, responsabilidades y convenciones del equipo.
+- [Entorno de desarrollo](docs/02-entorno-desarrollo.md): versiones, conexión local a MySQL y ejecución con Maven e IntelliJ IDEA.
+
+## Ejecución
+
+Requiere JDK 17 y MySQL 8.4.13. Ejecutar `sql/00-crear-base.sql` y copiar `application-local.properties.example` como `application-local.properties`, completando los datos de conexión.
+
+Desde la raíz del repositorio, con MySQL iniciado:
+
+```bash
+# macOS
+./mvnw clean verify
+./mvnw spring-boot:run
+
+# Windows PowerShell
+.\mvnw.cmd clean verify
+.\mvnw.cmd spring-boot:run
+```
+
+La guía de entorno explica la configuración y las comprobaciones de esta base inicial.

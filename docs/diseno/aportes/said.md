@@ -214,3 +214,37 @@ La plantilla `formulario.html` se utilizará para crear y editar productos, ajus
 `Producto.java` será el modelo compartido por las distintas capas. El paquete `exception` reunirá la excepción de negocio y su manejador web, cada uno con la responsabilidad indicada en su componente.
 
 `GestorProductosApplication.java` y `application.properties` proporcionarán el arranque y la configuración general de la aplicación.
+
+## 7. Diseño de datos
+
+### 7.1. Base de datos y tabla productos
+
+La base de datos `gestor_productos` almacenará el catálogo en la tabla `productos`. Cada fila representará un producto independiente, identificado mediante una clave única y compuesto por su nombre y precio.
+
+La tabla se creará mediante un script SQL durante la implementación de la persistencia. La configuración `spring.jpa.hibernate.ddl-auto=none` mantendrá la administración del esquema mediante estos scripts.
+
+### 7.2. Diccionario de datos y restricciones
+
+| Campo | Descripción | Tipo en MySQL | Restricciones |
+| --- | --- | --- | --- |
+| `id` | Identificador único del producto. | `BIGINT` | Clave primaria, obligatoria y autoincremental. Se generará al registrar el producto y se conservará al editarlo. |
+| `nombre` | Nombre del producto mostrado en el catálogo. | `VARCHAR(100)` | Obligatorio, de 1 a 100 caracteres después de recortar espacios al principio y al final. Se permitirán nombres repetidos. |
+| `precio` | Importe del producto en pesos mexicanos. | `DECIMAL(10,2)` | Obligatorio, entre 0 y 99999999.99, con hasta dos decimales. |
+
+La tabla utilizará `PRIMARY KEY` y `AUTO_INCREMENT` para `id`, y `NOT NULL` para los campos obligatorios. El servidor validará el nombre y el precio antes de guardar, de acuerdo con las reglas del producto. Los precios inválidos se rechazarán sin redondearlos para ajustarlos al límite de decimales. Los importes se mostrarán con dos decimales.
+
+El usuario capturará únicamente el nombre y el precio. El identificador permitirá distinguir los registros incluso cuando compartan el mismo nombre.
+
+### 7.3. Correspondencia entre la tabla y la entidad Producto
+
+La entidad `Producto` representará una fila de `productos`. Sus atributos mantendrán los mismos nombres que las columnas de la tabla.
+
+| Columna | Atributo de Producto | Tipo en Java | Correspondencia |
+| --- | --- | --- | --- |
+| `id` | `id` | `Long` | Identificador generado por MySQL. Permanecerá sin asignar hasta el registro de un producto nuevo. |
+| `nombre` | `nombre` | `String` | Texto obligatorio con longitud máxima de 100 caracteres. |
+| `precio` | `precio` | `BigDecimal` | Valor decimal con precisión de 10 dígitos y escala de 2, correspondiente a `DECIMAL(10,2)`. |
+
+El mapeo JPA asociará la entidad con la tabla y establecerá la generación del identificador, la obligatoriedad de los campos, la longitud del nombre y la precisión y escala del precio. `BigDecimal` permitirá representar los importes mediante valores decimales.
+
+`ProductoRepository` utilizará esta correspondencia para consultar y guardar los registros. `ProductoService` aplicará las reglas y coordinará las transacciones, incluida la eliminación múltiple, que se deshará por completo si ocurre un fallo o alguno de los productos solicitados ya no existe.

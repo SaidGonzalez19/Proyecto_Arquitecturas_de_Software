@@ -41,3 +41,124 @@ ProductoController recibirá la solicitud y los datos enviados por el navegador.
 Los resultados regresarán al controlador a través del servicio. Para mostrar una pantalla, el controlador proporcionará los datos al modelo de la vista y Thymeleaf generará la página HTML que recibirá el navegador. Cuando corresponda actualizar el listado tras una operación, el controlador realizará una redirección.
 
 Las excepciones previstas se comunicarán desde la capa que las detecte y se atenderán en presentación para generar una respuesta comprensible para el usuario.
+
+## 4. Descripción de componentes
+
+El sistema se dividirá en tres componentes lógicos: Presentación web, Gestión de productos y Persistencia de productos. Los tres formarán parte de una sola aplicación.
+
+En esta descripción, las interfaces de salida identificarán los servicios ofrecidos por el componente y las interfaces de entrada los servicios que requiere de otros componentes.
+
+Cada interfaz ofrecida tendrá un identificador único: IW para Presentación web, IG para Gestión de productos e IP para Persistencia de productos. Estos identificadores se utilizarán en la descripción de clases para relacionar las funciones con los servicios que implementan. Cuando otro componente requiera una interfaz, conservará el identificador de su proveedor.
+
+### 4.1. Presentación web
+
+**Nombre:** Presentación web.
+
+**Descripción:** permitirá al usuario consultar y administrar los productos mediante el listado y los formularios. Recibirá las solicitudes del navegador, solicitará las operaciones de negocio y preparará las páginas y los mensajes de respuesta.
+
+**Dependencias con otros componentes:** utilizará los servicios de Gestión de productos para consultar, crear, actualizar y eliminar registros.
+
+**Interfaces de salida — servicios ofrecidos:**
+
+| Identificador | Nombre | Descripción |
+| --- | --- | --- |
+| IW-01 | Consulta del catálogo | Mostrará el listado de productos mediante `GET /productos`. |
+| IW-02 | Registro de productos | Presentará el formulario de creación mediante `GET /productos/nuevo` y recibirá los datos del nuevo producto mediante `POST /productos`. |
+| IW-03 | Edición de productos | Presentará los datos actuales mediante `GET /productos/{id}/editar` y recibirá las modificaciones mediante `POST /productos/{id}`. |
+| IW-04 | Eliminación individual | Recibirá y atenderá la solicitud de eliminar un producto mediante `POST /productos/{id}/eliminar`. |
+| IW-05 | Eliminación seleccionada | Recibirá y atenderá la solicitud de eliminar los productos seleccionados mediante `POST /productos/eliminar-seleccionados`. |
+
+Estas interfaces se ofrecerán mediante los métodos de `ProductoController`: `listar` para IW-01; `mostrarCreacion` y `crear` para IW-02; `mostrarEdicion` y `actualizar` para IW-03; `eliminar` para IW-04; y `eliminarSeleccionados` para IW-05.
+
+Estas interfaces serán utilizadas por el usuario a través del navegador, que enviará las solicitudes HTTP y recibirá las páginas y respuestas de la aplicación.
+
+La ruta inicial `GET /` redirigirá a `/productos`. La selección de todos los registros se realizará en la pantalla y utilizará IW-05 para solicitar su eliminación.
+
+**Interfaces de entrada — servicios requeridos:**
+
+IG-01, IG-02, IG-03, IG-04, IG-05 e IG-06, ofrecidas por Gestión de productos mediante `ProductoService`. Sus nombres y descripciones se encuentran en el apartado 4.2.
+
+**Artefactos:**
+
+- `ProductoController.java` y `ProductoExceptionHandler.java`.
+- Modelo compartido `Producto.java`.
+- Plantillas `listado.html` y `formulario.html`.
+- Recursos `estilos.css` y `productos.js`.
+- Spring MVC y Thymeleaf.
+
+### 4.2. Gestión de productos
+
+**Nombre:** Gestión de productos.
+
+**Descripción:** aplicará las reglas del catálogo, comprobará la existencia de los productos y coordinará las operaciones y transacciones. Proporcionará sus resultados a Presentación web.
+
+**Dependencias con otros componentes:** utilizará Persistencia de productos para consultar y modificar los registros almacenados.
+
+**Interfaces de salida — servicios ofrecidos:**
+
+| Identificador | Nombre | Descripción |
+| --- | --- | --- |
+| IG-01 | Listar productos | Obtendrá el catálogo ordenado por identificador ascendente. Si no hay registros, devolverá una lista vacía. |
+| IG-02 | Obtener producto por ID | Obtendrá un producto mediante su identificador o comunicará que no existe. |
+| IG-03 | Crear producto | Registrará un producto aplicando las reglas del catálogo y devolverá el producto guardado con su identificador generado. |
+| IG-04 | Actualizar producto | Modificará un producto existente aplicando las reglas del catálogo y conservando su identificador. |
+| IG-05 | Eliminar producto | Comprobará la existencia del producto y coordinará su eliminación. |
+| IG-06 | Eliminar productos seleccionados | Coordinará la eliminación del conjunto solicitado dentro de una sola transacción, evitando un borrado parcial si ocurre un fallo. |
+
+Estas interfaces se ofrecerán mediante los métodos `listar`, `obtenerPorId`, `crear`, `actualizar`, `eliminar` y `eliminarSeleccionados` de `ProductoService`, respectivamente.
+
+Las operaciones aplicarán las reglas definidas en la sección 1. Un producto inexistente se comunicará mediante `ProductoNoEncontradoException`; los argumentos inválidos, mediante `IllegalArgumentException`.
+
+**Interfaces de entrada — servicios requeridos:**
+
+IP-01, IP-02, IP-03, IP-04, IP-05 e IP-06, ofrecidas por Persistencia de productos mediante `ProductoRepository`. Sus nombres y descripciones se encuentran en el apartado 4.3.
+
+**Artefactos:**
+
+- `ProductoService.java`.
+- `ProductoNoEncontradoException.java`.
+- Modelo compartido `Producto.java`.
+- Soporte de transacciones de Spring.
+
+### 4.3. Persistencia de productos
+
+**Nombre:** Persistencia de productos.
+
+**Descripción:** proporcionará acceso a los registros de la tabla `productos`. Realizará las consultas, guardados y eliminaciones solicitados por Gestión de productos.
+
+**Dependencias con otros componentes:** utilizará los servicios de almacenamiento de MySQL para consultar y modificar la tabla `productos`. La entidad `Producto` establecerá la correspondencia entre los objetos Java y los registros.
+
+**Interfaces de salida — servicios ofrecidos:**
+
+| Identificador | Nombre | Descripción |
+| --- | --- | --- |
+| IP-01 | Consultar productos ordenados | Recuperará los registros con el orden solicitado mediante `findAll(Sort)`. |
+| IP-02 | Buscar producto por ID | Buscará un registro mediante `findById(Long)` y devolverá un resultado vacío cuando no exista. |
+| IP-03 | Consultar productos por IDs | Recuperará los registros existentes entre los identificadores recibidos mediante `findAllById(Iterable<Long>)`. |
+| IP-04 | Guardar producto | Persistirá un producto nuevo o modificado mediante `save(Producto)` y devolverá el producto guardado. |
+| IP-05 | Eliminar producto persistido | Borrará el registro recibido mediante `delete(Producto)`. |
+| IP-06 | Eliminar conjunto de productos | Borrará los registros recibidos mediante `deleteAll(Iterable<Producto>)`. |
+
+Estas operaciones serán heredadas por `ProductoRepository`, que extenderá `JpaRepository<Producto, Long>`. Gestión de productos interpretará sus resultados y coordinará las transacciones necesarias.
+
+**Interfaces de entrada — servicios requeridos:**
+
+| Nombre | Proveedor | Descripción |
+| --- | --- | --- |
+| Acceso a MySQL mediante JDBC | MySQL | Permitirá conectarse a la base `gestor_productos` y ejecutar consultas y modificaciones sobre la tabla `productos`, utilizando MySQL Connector/J. |
+
+Esta interfaz corresponde a un servicio externo de almacenamiento, por lo que no utiliza los identificadores IW, IG o IP de los componentes propios.
+
+**Artefactos:**
+
+- `ProductoRepository.java`.
+- Modelo compartido `Producto.java`.
+- Spring Data JPA, Hibernate y MySQL Connector/J.
+- `application.properties` y configuración local de conexión.
+- Scripts SQL de creación de la base de datos y la tabla.
+
+### 4.4. Diagrama general de componentes
+
+El marco delimita los tres componentes del Gestor de Productos. Fuera de él, el navegador se comunica con Presentación web y MySQL proporciona el almacenamiento al que accede Persistencia de productos mediante JDBC. Las etiquetas IW, IG e IP agrupan las interfaces descritas en los apartados anteriores.
+
+![Diagrama de componentes del Gestor de Productos](../diagramas/diagrama-componentes.png)

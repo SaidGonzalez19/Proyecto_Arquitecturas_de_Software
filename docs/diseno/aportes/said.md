@@ -161,7 +161,7 @@ Esta interfaz corresponde a un servicio externo de almacenamiento, por lo que no
 
 El marco delimita los tres componentes del Gestor de Productos. Fuera de él, el navegador se comunica con Presentación web y MySQL proporciona el almacenamiento al que accede Persistencia de productos mediante JDBC. Las etiquetas IW, IG e IP agrupan las interfaces descritas en los apartados anteriores.
 
-![Diagrama de componentes del Gestor de Productos](../diagramas/diagrama-componentes.png)
+![Diagrama de componentes del Gestor de Productos](../../diagramas/diagrama-componentes.png)
 
 ## 5. Estructura del proyecto
 

@@ -162,3 +162,55 @@ Esta interfaz corresponde a un servicio externo de almacenamiento, por lo que no
 El marco delimita los tres componentes del Gestor de Productos. Fuera de él, el navegador se comunica con Presentación web y MySQL proporciona el almacenamiento al que accede Persistencia de productos mediante JDBC. Las etiquetas IW, IG e IP agrupan las interfaces descritas en los apartados anteriores.
 
 ![Diagrama de componentes del Gestor de Productos](../diagramas/diagrama-componentes.png)
+
+## 5. Estructura del proyecto
+
+### 5.1. Árbol de paquetes y archivos previstos
+
+El código Java se organizará bajo el paquete raíz `com.equipo.gestorproductos`. Las plantillas, los recursos estáticos y la configuración se ubicarán en `src/main/resources`.
+
+La estructura prevista será la siguiente.
+
+```text
+src/
+└── main/
+    ├── java/com/equipo/gestorproductos/
+    │   ├── GestorProductosApplication.java
+    │   ├── controller/
+    │   │   └── ProductoController.java
+    │   ├── service/
+    │   │   └── ProductoService.java
+    │   ├── repository/
+    │   │   └── ProductoRepository.java
+    │   ├── model/
+    │   │   └── Producto.java
+    │   └── exception/
+    │       ├── ProductoNoEncontradoException.java
+    │       └── ProductoExceptionHandler.java
+    └── resources/
+        ├── application.properties
+        ├── templates/productos/
+        │   ├── listado.html
+        │   └── formulario.html
+        └── static/
+            ├── css/
+            │   └── estilos.css
+            └── js/
+                └── productos.js
+```
+
+El proyecto base ya contiene `GestorProductosApplication.java` y `application.properties`. Los demás archivos del árbol se incorporarán durante la implementación.
+
+La plantilla `formulario.html` se utilizará para crear y editar productos, ajustando el título, los datos y la acción del formulario según la operación.
+
+### 5.2. Correspondencia entre archivos y componentes
+
+| Componente | Archivos principales |
+| --- | --- |
+| Presentación web | `controller/ProductoController.java`, `exception/ProductoExceptionHandler.java`, las plantillas `listado.html` y `formulario.html`, y los recursos `estilos.css` y `productos.js`. |
+| Gestión de productos | `service/ProductoService.java` y `exception/ProductoNoEncontradoException.java`. |
+| Persistencia de productos | `repository/ProductoRepository.java`, apoyado en el mapeo de `model/Producto.java`. |
+
+`Producto.java` será el modelo compartido por las distintas capas. El paquete `exception` reunirá la excepción de negocio y su manejador web, cada uno con la responsabilidad indicada en su componente.
+
+`GestorProductosApplication.java` y `application.properties` proporcionarán el arranque y la configuración general de la aplicación.

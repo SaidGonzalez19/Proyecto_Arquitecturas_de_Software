@@ -1,0 +1,153 @@
+:root {
+    color-scheme: light;
+    font-family: Arial, "Liberation Sans", sans-serif;
+    color: #212529;
+    background: #fff;
+    --borde: #ced4da;
+    --azul: #0b5ed7;
+    --rojo: #be2331;
+    --gris: #495057;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; font-size: 1rem; line-height: 1.45; }
+a { color: var(--azul); }
+button, input { font: inherit; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 3px solid #0753bd; outline-offset: 3px; }
+
+.contenedor { width: min(60rem, calc(100% - 2rem)); margin-inline: auto; }
+.barra { background: #212529; }
+.navegacion { min-height: 3.5rem; display: flex; align-items: center; gap: 2.25rem; }
+.navegacion a { color: #ced4da; text-decoration: none; font-size: .94rem; }
+.navegacion .marca { color: #fff; font-size: 1.2rem; font-weight: 700; }
+.navegacion a:hover { text-decoration: underline; }
+.navegacion a:focus-visible { outline-color: #fff; }
+.contenido { padding-block: 1.75rem 3rem; }
+h1, h2, p { margin: 0; }
+h1 { font-size: 1.875rem; line-height: 1.2; }
+h2 { font-size: 1.25rem; line-height: 1.4; }
+
+.cabecera-listado, .acciones-listado, .acciones-fila, .acciones-formulario, .acciones-dialogo {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .65rem;
+}
+.cabecera-listado { justify-content: space-between; margin: .45rem 0 1.5rem; }
+.contador { color: #59636e; font-size: .875rem; }
+.contador:empty { display: none; }
+.contador:not(:empty) { margin-right: .3rem; }
+
+.boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.5rem;
+    padding: .5rem 1.1rem;
+    border: 1px solid transparent;
+    border-radius: .3rem;
+    font-size: .94rem;
+    line-height: 1.35;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.boton:disabled { opacity: .55; cursor: default; }
+.primario { color: #fff; background: var(--azul); }
+.peligro { color: #fff; background: var(--rojo); }
+.primario:hover { background: #084daf; }
+.peligro:hover { background: #a01927; }
+.secundario, .editar, .eliminar { background: #fff; border-color: currentColor; }
+.secundario { color: var(--gris); }
+.editar { color: var(--azul); }
+.eliminar { color: var(--rojo); }
+.secundario:hover, .editar:hover, .eliminar:hover { background: #f1f4f7; }
+
+.tabla-desplazable { overflow-x: auto; }
+table { width: 100%; min-width: 41rem; border-collapse: collapse; text-align: left; }
+th, td { border: 1px solid var(--borde); padding: .5rem .875rem; }
+th { height: 2.75rem; background: #e9ecef; font-size: .94rem; }
+td { height: 3rem; }
+.col-seleccion { width: 3rem; text-align: center; padding: .4rem; }
+input[type="checkbox"] { width: 1.2rem; height: 1.2rem; margin: 0; vertical-align: middle; accent-color: var(--azul); }
+.col-id { width: 5rem; }
+.col-precio { width: 10rem; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.col-acciones { width: 17rem; }
+.nombre-producto { overflow-wrap: anywhere; }
+tr:has(input[name="ids"]:checked) { background: #e7f0fd; }
+.acciones-fila { flex-wrap: nowrap; gap: .5rem; }
+.acciones-fila .boton { min-height: 1.95rem; padding: .25rem .75rem; font-size: .875rem; }
+.listado-vacio { padding: 1.25rem; text-align: center; color: #59636e; }
+
+.pantalla-formulario { padding-top: 1.625rem; }
+.volver { display: inline-block; margin-bottom: .625rem; font-size: .875rem; }
+.formulario { width: min(100%, 32.5rem); margin-top: 1.5rem; }
+.campo + .campo { margin-top: 1.25rem; }
+.campo label { display: block; font-size: .94rem; font-weight: 700; margin-bottom: .25rem; }
+.campo input {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: 2.55rem;
+    border: 1px solid var(--borde);
+    border-radius: .3rem;
+    padding: .45rem .75rem;
+    color: inherit;
+    background: #fff;
+}
+.campo input::placeholder { color: #707b85; opacity: 1; }
+.campo input[readonly] { color: var(--gris); background: #e9ecef; }
+.grupo-precio { display: flex; }
+.grupo-precio span {
+    display: grid;
+    place-items: center;
+    width: 4rem;
+    flex-shrink: 0;
+    background: #e9ecef;
+    color: var(--gris);
+    font-size: .875rem;
+    border: 1px solid var(--borde);
+    border-right: 0;
+    border-radius: .3rem 0 0 .3rem;
+}
+.grupo-precio input { border-radius: 0 .3rem .3rem 0; }
+.campo input[aria-invalid="true"], .grupo-precio.invalido span { border-color: #c52234; }
+.ayuda, .error-campo { margin-top: .4rem; }
+.ayuda { color: #59636e; font-size: .8125rem; }
+.error-campo { color: #b02130; font-size: .875rem; }
+.acciones-formulario { margin-top: 1.3rem; }
+
+.alerta { border: 1px solid; border-radius: .3rem; padding: .7rem 1rem; margin: 0 0 1rem; }
+.exito { color: #0f5132; background: #d1e7dd; border-color: #a3cfbb; }
+.aviso { color: #664d03; background: #fff3cd; border-color: #ffda6a; }
+.error { color: #842029; background: #f8d7da; border-color: #f1aeb5; }
+
+dialog {
+    width: min(32.5rem, calc(100% - 2rem));
+    max-height: calc(100% - 2rem);
+    padding: 0;
+    color: inherit;
+    border: 1px solid var(--borde);
+    border-radius: .45rem;
+}
+dialog::backdrop { background: rgb(0 0 0 / .5); }
+dialog h2, .cuerpo-dialogo, .acciones-dialogo { padding: 1rem 1.5rem; }
+dialog h2 { border-bottom: 1px solid #dee2e6; }
+.cuerpo-dialogo { max-height: 50vh; overflow-y: auto; overflow-wrap: anywhere; }
+.cuerpo-dialogo ul { list-style: none; margin: .35rem 0 0; padding: 0; font-weight: 600; }
+.cuerpo-dialogo li + li { margin-top: .2rem; }
+.acciones-dialogo { border-top: 1px solid #dee2e6; justify-content: flex-end; }
+.solo-lectores { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+@media (max-width: 40rem) {
+    .navegacion { gap: 1.25rem; }
+    .contenido { padding-top: 1.25rem; }
+    .cabecera-listado { align-items: flex-start; flex-direction: column; }
+    .acciones-listado, .acciones-dialogo { gap: .5rem; }
+    .acciones-listado .boton { padding-inline: .75rem; }
+    .contador:not(:empty) { flex-basis: 100%; }
+    .col-acciones { width: 11rem; }
+    .col-id { width: 3.5rem; }
+}

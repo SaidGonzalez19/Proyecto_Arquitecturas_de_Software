@@ -176,7 +176,7 @@ Recibe las acciones del catálogo, prepara las vistas, convierte y valida la cap
 | `Producto` | Dependencia de uso: es el producto que se muestra y se captura; solo `nombre` y `precio` son enlazables. |
 | `ProductoNoEncontradoException` | Dependencia por propagación: la deja salir hacia `ProductoExceptionHandler`. |
 | `Model`, `RedirectAttributes`, `BindingResult`, `WebDataBinder` | Dependencias de uso de Spring: datos de la vista, mensajes flash, errores del formulario y configuración del enlace. |
-| `DataAccessException`, `TransactionException` | Dependencia por manejo: se atienden al guardar y al eliminar; en la consulta del listado y la carga de edición se propagan al manejador. `DataAccessException` incluye `ObjectOptimisticLockingFailureException`, que el servicio lanza ante cambios concurrentes. |
+| `DataAccessException`, `TransactionException` | Dependencia por manejo de errores de persistencia: se atienden al guardar y al eliminar; en la consulta del listado y la carga de edición se propagan al manejador. |
 
 **Atributos**
 
@@ -222,7 +222,7 @@ Convierte las excepciones previstas que salen de `ProductoController` en una red
 | `ProductoController` | Dependencia de aplicación del consejo: delimita las operaciones web a las que se aplica el manejo de errores. |
 | `ProductoNoEncontradoException` | Dependencia por excepción atendida: se obtiene de ella el mensaje de producto inexistente. |
 | `RedirectAttributes` | Dependencia de uso: envía `mensajeError` como atributo flash al redirigir. |
-| `DataAccessException`, `TransactionException` | Dependencia por excepción atendida: fallos de persistencia no tratados localmente, entre ellos `ObjectOptimisticLockingFailureException`. |
+| `DataAccessException`, `TransactionException` | Dependencia por excepción atendida: fallos de persistencia no tratados localmente. |
 | `ResponseEntity<String>` | Dependencia de uso: devuelve estado HTTP, tipo de contenido y cuerpo HTML sin redirección automática. |
 
 No inyecta `ProductoService` ni `ProductoRepository`, y no vuelve a consultar la base para construir la respuesta de error.

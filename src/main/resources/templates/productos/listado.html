@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="es-MX" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Productos | Gestor de Productos</title>
+    <link rel="stylesheet" th:href="@{/css/estilos.css}">
+    <script defer th:src="@{/js/productos.js}"></script>
+</head>
+<body>
+    <nav class="barra" aria-label="Navegación principal">
+        <div class="contenedor navegacion">
+            <a class="marca" th:href="@{/}">Gestor de Productos</a>
+            <a th:href="@{/productos}" aria-current="page">Productos</a>
+        </div>
+    </nav>
+
+    <main class="contenedor contenido">
+        <p th:if="${mensajeExito != null}" class="alerta exito" role="status" th:text="${mensajeExito}"></p>
+        <p th:if="${mensajeError != null and mensajeError != 'Selecciona al menos un producto'}"
+           class="alerta error" role="alert" th:text="${mensajeError}"></p>
+        <p id="aviso-seleccion" class="alerta aviso" role="alert" hidden
+           th:attr="hidden=${mensajeError == 'Selecciona al menos un producto' ? null : 'hidden'}">Selecciona al menos un producto</p>
+        <noscript><p class="alerta aviso">Activa JavaScript para seleccionar y confirmar eliminaciones.</p></noscript>
+
+        <div class="cabecera-listado">
+            <h1>Productos</h1>
+            <div class="acciones-listado">
+                <span id="cantidad-seleccionada" class="contador" role="status"></span>
+                <form id="eliminar-seleccion" data-eliminar="seleccion" method="post"
+                      th:action="@{/productos/eliminar-seleccionados}">
+                    <button type="submit" class="boton peligro" disabled>Eliminar seleccionados</button>
+                </form>
+                <a class="boton primario" th:href="@{/productos/nuevo}">Nuevo producto</a>
+            </div>
+        </div>
+
+        <div class="tabla-desplazable" role="region" aria-label="Listado de productos" tabindex="0">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col" class="col-seleccion">
+                            <input type="checkbox" id="seleccionar-todos" disabled
+                                   aria-label="Seleccionar todos los productos">
+                        </th>
+                        <th scope="col" class="col-id">ID</th>
+                        <th scope="col">Nombre</th>
+                        <th scope="col" class="col-precio">Precio (MXN)</th>
+                        <th scope="col" class="col-acciones">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="producto : ${productos}">
+                        <td class="col-seleccion">
+                            <input type="checkbox" name="ids" form="eliminar-seleccion" disabled
+                                   th:value="${producto.id}"
+                                   th:attr="data-nombre=${producto.nombre},aria-label=|Seleccionar ${producto.nombre} (ID ${producto.id})|">
+                        </td>
+                        <td class="col-id" th:text="${producto.id}"></td>
+                        <td class="nombre-producto" th:text="${producto.nombre}"></td>
+                        <td class="col-precio" th:text="${'$' + #numbers.formatDecimal(producto.precio, 1, 'COMMA', 2, 'POINT')}"></td>
+                        <td>
+                            <div class="acciones-fila">
+                                <a class="boton editar" th:href="@{/productos/{id}/editar(id=${producto.id})}"
+                                   th:attr="aria-label=|Editar ${producto.nombre} (ID ${producto.id})|">Editar</a>
+                                <form method="post" data-eliminar="individual"
+                                      th:action="@{/productos/{id}/eliminar(id=${producto.id})}">
+                                    <button type="submit" class="boton eliminar" disabled
+                                            th:attr="aria-label=|Eliminar ${producto.nombre} (ID ${producto.id})|">Eliminar</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(productos)}">
+                        <td colspan="5" class="listado-vacio">No hay productos registrados</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <dialog id="confirmacion" aria-labelledby="titulo-confirmacion" aria-describedby="detalle-confirmacion">
+        <h2 id="titulo-confirmacion"></h2>
+        <div class="cuerpo-dialogo">
+            <p id="detalle-confirmacion"></p>
+            <ul id="productos-afectados"></ul>
+        </div>
+        <div class="acciones-dialogo">
+            <button type="button" class="boton secundario" id="cancelar" autofocus>Cancelar</button>
+            <button type="button" class="boton peligro" id="confirmar"></button>
+        </div>
+    </dialog>
+</body>
+</html>

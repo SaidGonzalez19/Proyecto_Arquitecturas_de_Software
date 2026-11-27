@@ -39,12 +39,12 @@ Reglas generales de comportamiento:
 - Si un formulario contiene datos inválidos, se muestran los errores y se conserva lo capturado.
 - Si no hay productos, se muestra «No hay productos registrados» y sigue disponible la creación.
 - Si se intenta eliminar sin seleccionar registros, se solicita seleccionar al menos uno («Selecciona al menos un producto»).
-- La eliminación múltiple se realiza en una sola operación: si falla o alguno de los productos ya no existe, se deshacen los cambios para evitar un borrado parcial.
+- La eliminación múltiple se realiza en una sola transacción. Si falla o alguno de los productos ya no existe, se deshacen los cambios para evitar un borrado parcial.
 - Al abrir para edición, modificar o eliminar un producto inexistente, la aplicación comunica el problema y permite regresar al listado.
 - Una selección con identificadores repetidos se procesa una sola vez.
 
 ### 1.5. Diagrama de casos de uso
-![Diagrama de casos de uso del Gestor de Productos](docs/diagramas/CasosdeUso_GestordeProductos.png)
+![Diagrama de casos de uso del Gestor de Productos](../../diagramas/CasosdeUso_GestordeProductos.png)
 
 ### 1.6. Descripción de los casos de uso y resultados esperados
 
@@ -132,7 +132,7 @@ Reglas generales de comportamiento:
     2. El usuario selecciona la opción «Eliminar seleccionados».
     3. El sistema solicita confirmación.
     4. El usuario confirma la operación.
-    5. El sistema elimina todos los productos seleccionados en una sola operación.
+    5. El sistema elimina todos los productos seleccionados en una sola transacción.
     6. El sistema regresa al listado y muestra un mensaje de éxito.
 - **Alternativas:**
     - *A1. Sin selección:* si no hay productos marcados, el sistema muestra «Selecciona al menos un producto» y no elimina nada.
@@ -167,7 +167,7 @@ Reglas generales de comportamiento:
     2. El usuario selecciona la opción «Eliminar seleccionados».
     3. El sistema solicita confirmación.
     4. El usuario confirma la operación.
-    5. El sistema elimina todos los productos seleccionados de la base de datos mediante una sola operación.
+    5. El sistema elimina todos los productos seleccionados de la base de datos mediante una sola transacción.
     6. El sistema regresa al listado, muestra el mensaje «No hay productos registrados» y un mensaje de éxito.
 - **Alternativas:**
     - *A1. Listado vacío:* si no existen productos registrados, no hay nada que seleccionar. Si el usuario pulsa «Eliminar

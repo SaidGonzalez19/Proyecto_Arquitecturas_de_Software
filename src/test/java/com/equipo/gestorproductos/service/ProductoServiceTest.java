@@ -96,7 +96,7 @@ class ProductoServiceTest {
 			return p;
 		});
 
-		Producto creado = servicio.crear("  Cuaderno  ", new BigDecimal("10.500"));
+		Producto creado = servicio.crear("  Cuaderno  ", new BigDecimal("10.5"));
 
 		assertEquals(1L, creado.getId());
 		assertEquals("Cuaderno", creado.getNombre());
@@ -138,6 +138,15 @@ class ProductoServiceTest {
 		verify(repositorio, never()).save(any());
 	}
 
+	@Test
+	void crearRechazaPrecioConEscalaMayorADosAunqueSeanCeros() {
+		IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+				() -> servicio.crear("A", new BigDecimal("10.500")));
+
+		assertEquals("El precio admite como máximo dos decimales", e.getMessage());
+		verify(repositorio, never()).save(any());
+	}
+
 	// ---- actualizar ----
 
 	@Test
@@ -151,6 +160,18 @@ class ProductoServiceTest {
 		assertEquals(4L, actualizado.getId());
 		assertEquals("Nuevo", actualizado.getNombre());
 		assertEquals(new BigDecimal("2.50"), actualizado.getPrecio());
+	}
+
+	@Test
+	void actualizarRechazaPrecioConEscalaMayorADosAunqueSeanCeros() {
+		Producto existente = producto(4L, "Viejo", "1.00");
+		when(repositorio.findById(4L)).thenReturn(Optional.of(existente));
+
+		assertThrows(IllegalArgumentException.class,
+				() -> servicio.actualizar(4L, "Nuevo", new BigDecimal("10.500")));
+
+		assertEquals("Viejo", existente.getNombre());
+		verify(repositorio, never()).save(any());
 	}
 
 	@Test

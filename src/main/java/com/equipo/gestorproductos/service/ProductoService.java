@@ -36,7 +36,7 @@ public class ProductoService {
 	/** Precio máximo permitido. El mínimo es cero. */
 	private static final BigDecimal PRECIO_MAXIMO = new BigDecimal("99999999.99");
 
-	/** Máximo de decimales significativos del precio. */
+	/** Máximo de decimales del precio, según la escala del valor recibido. */
 	private static final int PRECIO_ESCALA_MAXIMA = 2;
 
 	private static final String MSG_ID_INVALIDO = "El ID del producto debe ser un número positivo";
@@ -223,19 +223,21 @@ public class ProductoService {
 
 	/**
 	 * Valida el precio sin redondearlo y lo devuelve con escala 2.
-	 * Admite ceros sobrantes ({@code 10.500}) pero no decimales significativos
-	 * de más ({@code 10.505}).
+	 * La regla de dos decimales se aplica a la escala del valor recibido, antes
+	 * de quitar ceros finales: {@code 10.500} y {@code 10.505} se rechazan,
+	 * mientras que {@code 10.5} y {@code 10.50} se aceptan y se guardan como
+	 * {@code 10.50}.
 	 *
 	 * @param precio precio capturado
 	 * @return el mismo valor con dos decimales
-	 * @throws IllegalArgumentException si es nulo, está fuera de rango o tiene
-	 *         más de dos decimales significativos
+	 * @throws IllegalArgumentException si es nulo, está fuera de rango o su
+	 *         escala es mayor que dos
 	 */
 	private BigDecimal validarPrecio(BigDecimal precio) {
 		if (precio == null) {
 			throw new IllegalArgumentException(MSG_PRECIO_OBLIGATORIO);
 		}
-		if (precio.stripTrailingZeros().scale() > PRECIO_ESCALA_MAXIMA) {
+		if (precio.scale() > PRECIO_ESCALA_MAXIMA) {
 			throw new IllegalArgumentException(MSG_PRECIO_DECIMALES);
 		}
 		if (precio.signum() < 0 || precio.compareTo(PRECIO_MAXIMO) > 0) {

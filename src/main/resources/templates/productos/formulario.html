@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es-MX" xmlns:th="http://www.thymeleaf.org" th:with="edicion=${modo == 'editar'}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${(edicion ? 'Editar producto' : 'Nuevo producto') + ' | Gestor de Productos'}">Producto</title>
+    <link rel="stylesheet" th:href="@{/css/estilos.css}">
+</head>
+<body>
+    <nav class="barra" aria-label="Navegación principal">
+        <div class="contenedor navegacion">
+            <a class="marca" th:href="@{/}">Gestor de Productos</a>
+            <a th:href="@{/productos}">Productos</a>
+        </div>
+    </nav>
+
+    <main class="contenedor contenido pantalla-formulario">
+        <a class="volver" th:href="@{/productos}">Volver al listado</a>
+        <h1 th:text="${edicion ? 'Editar producto' : 'Nuevo producto'}"></h1>
+
+        <form class="formulario" th:object="${producto}" method="post" novalidate
+              th:action="${edicion} ? @{/productos/{id}(id=${producto.id})} : @{/productos}">
+            <p th:if="${mensajeExito != null}" class="alerta exito" role="status" th:text="${mensajeExito}"></p>
+            <p th:if="${mensajeError != null}" class="alerta error" role="alert" th:text="${mensajeError}"></p>
+            <p th:if="${#fields.hasErrors('nombre') or #fields.hasErrors('precio')}"
+               class="alerta error" role="alert">Revisa los campos señalados.</p>
+            <p th:each="error : ${#fields.globalErrors()}" class="alerta error" role="alert" th:text="${error}"></p>
+
+            <div class="campo">
+                <label for="id-producto">ID</label>
+                <input id="id-producto" type="text" readonly th:value="*{id}" placeholder="Se asigna al guardar">
+            </div>
+            <div class="campo">
+                <label for="nombre">Nombre</label>
+                <input type="text" th:field="*{nombre}" placeholder="Ejemplo: Mouse óptico" required
+                       th:attr="aria-invalid=${#fields.hasErrors('nombre')},aria-describedby=${#fields.hasErrors('nombre') ? 'error-nombre' : null}">
+                <p th:if="${#fields.hasErrors('nombre')}" id="error-nombre" class="error-campo" th:errors="*{nombre}"></p>
+            </div>
+            <div class="campo">
+                <label for="precio">Precio</label>
+                <div class="grupo-precio" th:classappend="${#fields.hasErrors('precio')} ? 'invalido'">
+                    <span id="moneda">MXN</span>
+                    <!-- Tras un error se muestra la captura literal, incluso si contiene ceros iniciales o letras. -->
+                    <input id="precio" name="precio" type="text" inputmode="decimal" placeholder="0.00" required
+                           th:value="${#fields.hasAnyErrors() and param.precio != null ? param.precio[0] : producto.precio}"
+                           th:attr="aria-invalid=${#fields.hasErrors('precio')},aria-describedby=${#fields.hasErrors('precio') ? 'moneda error-precio ayuda-precio' : 'moneda ayuda-precio'}">
+                </div>
+                <p th:if="${#fields.hasErrors('precio')}" id="error-precio" class="error-campo" th:errors="*{precio}"></p>
+                <p id="ayuda-precio" class="ayuda">Usa punto decimal, por ejemplo 189.50.</p>
+            </div>
+            <div class="acciones-formulario">
+                <button class="boton primario" type="submit" th:text="${edicion ? 'Guardar cambios' : 'Guardar producto'}"></button>
+                <a class="boton secundario" th:href="@{/productos}">Cancelar</a>
+            </div>
+        </form>
+    </main>
+</body>
+</html>

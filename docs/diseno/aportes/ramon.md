@@ -1,391 +1,218 @@
-# 6. Descripción de clases e interfaces Java
+## 6. Descripción de clases e interfaces Java
 
-> Aportación de Ramón Pacheco: `ProductoService`, `ProductoRepository`, `Producto` y `ProductoNoEncontradoException`.
-> Paquete raíz: `com.equipo.gestorproductos`. Base técnica: Java 17, Spring Boot 4.2.0 (Spring Data JPA, Hibernate, Jakarta Persistence), MySQL 8.4.
+### 6.1. Descripción individual según el formato solicitado
 
-## 6.1. Descripción individual según el formato solicitado
+Las siguientes fichas describen las cuatro clases e interfaces asignadas a Ramón, según el código implementado en `develop`. Los identificadores **IG-XX** corresponden a las interfaces de salida de Gestión de productos y los **IP-XX** a las de Persistencia de productos, ambos del apartado 4 de `said.md`.
 
-### ProductoService
-- Tipo: clase.
-- Paquete: `com.equipo.gestorproductos.service`
-- Componente: Gestión de productos.
-- Descripción y responsabilidad: concentra la lógica de negocio del catálogo. Valida y normaliza nombre y precio, comprueba que los productos existan, coordina las operaciones con `ProductoRepository` y define los límites transaccionales. Es el único lugar donde se interpretan los resultados del repositorio (`Optional` vacío, menos registros de los solicitados). No conoce rutas, plantillas ni mensajes flash. Se anota con `@Service` y `@Transactional` a nivel de clase; `listar` y `obtenerPorId` usan `@Transactional(readOnly = true)`.
+#### ProductoService
 
-#### Dependencias y relaciones
-| Clase/interfaz | Tipo de relación | Propósito |
-| --- | --- | --- |
-| `ProductoRepository` | Asociación dirigida (atributo, inyección por constructor) | Consultar, guardar y eliminar productos. |
-| `Producto` | Dependencia de uso (parámetros, variables y retornos) | Entidad que se crea, modifica y devuelve. |
-| `ProductoNoEncontradoException` | Dependencia (la lanza) | Señalar productos inexistentes. |
-| `ProductoController` (Fabio) | Es usada por (asociación dirigida desde el controlador) | Consumidor de las seis operaciones públicas. |
-
-#### Atributos
-| Nombre | Tipo | Visibilidad | Valor inicial/asignación | Descripción |
-| --- | --- | --- | --- | --- |
-| `productoRepository` | `ProductoRepository` | private final | Asignado en el constructor (inyección de Spring). | Acceso a datos. |
-| `NOMBRE_MAX_LONGITUD` | `int` | private static final | `100` | Longitud máxima del nombre tras recortarlo. |
-| `PRECIO_MAXIMO` | `BigDecimal` | private static final | `new BigDecimal("99999999.99")` | Límite superior del precio. El inferior es `BigDecimal.ZERO`. |
-| `PRECIO_ESCALA_MAXIMA` | `int` | private static final | `2` | Máximo de decimales significativos del precio. |
-
-#### Operaciones
-
-**Constructor**
-- Firma y visibilidad: `public ProductoService(ProductoRepository productoRepository)`
-- Descripción: recibe la dependencia del repositorio.
-- Parámetros: `productoRepository` (`ProductoRepository`): repositorio que se usará en todas las operaciones.
-- Retorno: no aplica (constructor).
-- Servicio e interfaz del componente que implementa: no aplica.
-- Precondiciones: Spring proporciona un repositorio no nulo.
-- Resultado esperado: servicio listo para usarse.
-- Excepciones previstas: ninguna.
-- Origen: declarado.
-
-**listar**
-- Firma y visibilidad: `public List<Producto> listar()`
-- Descripción: devuelve todos los productos ordenados por ID ascendente (`findAll(Sort.by(Sort.Direction.ASC, "id"))`).
-- Parámetros: ninguno.
-- Retorno: `List<Producto>`: productos registrados; lista vacía si no hay ninguno, nunca `null`.
-- Servicio e interfaz del componente que implementa: consulta de productos de la interfaz de salida de Gestión de productos (RF-01).
-- Precondiciones: ninguna.
-- Resultado esperado: lista ordenada por ID ascendente.
-- Excepciones previstas: solo errores técnicos de acceso a datos (`DataAccessException`).
-- Origen: declarado.
-
-**obtenerPorId**
-- Firma y visibilidad: `public Producto obtenerPorId(Long id)`
-- Descripción: recupera un producto existente; se usa para abrir el formulario de edición.
-- Parámetros: `id` (`Long`): identificador del producto.
-- Retorno: `Producto`: el producto con ese ID.
-- Servicio e interfaz del componente que implementa: consulta por ID de la interfaz de salida de Gestión de productos (RF-03).
-- Precondiciones: `id` no nulo y mayor que cero.
-- Resultado esperado: producto existente con sus datos actuales.
-- Excepciones previstas: `IllegalArgumentException` si el ID es nulo o no positivo; `ProductoNoEncontradoException` si no existe.
-- Origen: declarado.
-
-**crear**
-- Firma y visibilidad: `public Producto crear(String nombre, BigDecimal precio)`
-- Descripción: valida los datos, recorta el nombre, crea un `Producto` nuevo (ID nulo) y lo guarda con `save`.
-- Parámetros: `nombre` (`String`): nombre capturado, con posibles espacios exteriores; `precio` (`BigDecimal`): precio en MXN.
-- Retorno: `Producto`: la instancia devuelta por `save`, con el ID generado (no nulo).
-- Servicio e interfaz del componente que implementa: alta de producto de la interfaz de salida de Gestión de productos (RF-02).
-- Precondiciones: nombre no nulo, de 1 a 100 caracteres tras recortar; precio no nulo, entre 0 y 99999999.99 y con hasta dos decimales.
-- Resultado esperado: fila nueva en `productos`; el nombre se guarda recortado y el precio con escala 2 (sin redondeo).
-- Excepciones previstas: `IllegalArgumentException` con mensaje comprensible si algún dato es inválido (no se guarda nada); errores técnicos de acceso a datos.
-- Origen: declarado.
-
-**actualizar**
-- Firma y visibilidad: `public Producto actualizar(Long id, String nombre, BigDecimal precio)`
-- Descripción: comprueba que el producto exista, valida los datos y modifica la instancia gestionada conservando su ID. Nunca construye un `Producto` nuevo con ese ID, porque `save` podría interpretarlo como fusión de una entidad desconectada y acabar insertando un sustituto.
-- Parámetros: `id` (`Long`): producto a modificar; `nombre` (`String`): nuevo nombre; `precio` (`BigDecimal`): nuevo precio.
-- Retorno: `Producto`: producto actualizado, con el mismo ID.
-- Servicio e interfaz del componente que implementa: modificación de producto de la interfaz de salida de Gestión de productos (RF-03).
-- Precondiciones: `id` positivo y no nulo; producto existente; `nombre` y `precio` cumplen las reglas del modelo.
-- Resultado esperado: la fila existente cambia de nombre y precio; no se crean ni eliminan filas.
-- Excepciones previstas: `IllegalArgumentException` (ID, nombre o precio inválidos); `ProductoNoEncontradoException` si el ID no existe; si otro usuario lo elimina mientras se actualiza, Hibernate detecta que no se afectó ninguna fila y la transacción se revierte con una excepción técnica de Spring (`ObjectOptimisticLockingFailureException`), sin insertar nada.
-- Origen: declarado.
-
-**eliminar**
-- Firma y visibilidad: `public void eliminar(Long id)`
-- Descripción: comprueba que el producto exista y lo elimina con `delete(Producto)`.
-- Parámetros: `id` (`Long`): producto a eliminar.
-- Retorno: `void`.
-- Servicio e interfaz del componente que implementa: baja de producto de la interfaz de salida de Gestión de productos (RF-04).
-- Precondiciones: `id` positivo y no nulo; producto existente.
-- Resultado esperado: la fila deja de existir.
-- Excepciones previstas: `IllegalArgumentException` si el ID es inválido; `ProductoNoEncontradoException` si no existe; `ObjectOptimisticLockingFailureException` si desaparece de forma concurrente antes de confirmar.
-- Origen: declarado.
-
-**eliminarSeleccionados**
-- Firma y visibilidad: `public void eliminarSeleccionados(List<Long> ids)`
-- Descripción: elimina en una única transacción todos los productos indicados o ninguno. Ver «Garantía de la eliminación múltiple».
-- Parámetros: `ids` (`List<Long>`): IDs seleccionados; los repetidos se procesan una sola vez.
-- Retorno: `void`.
-- Servicio e interfaz del componente que implementa: baja múltiple de la interfaz de salida de Gestión de productos (RF-05, RF-06 y RF-07; «eliminar todos» es seleccionar todo el listado).
-- Precondiciones: `ids` no nulo ni vacío; cada elemento no nulo y positivo; todos los IDs existen.
-- Resultado esperado: todos los productos solicitados eliminados; ante cualquier fallo, ningún cambio persistido.
-- Excepciones previstas: `IllegalArgumentException("Selecciona al menos un producto")` si la lista es nula o vacía; `IllegalArgumentException` con mensaje comprensible si hay elementos nulos o no positivos; `ProductoNoEncontradoException` con uno de los IDs faltantes (el primero en el orden recibido); `ObjectOptimisticLockingFailureException` u otro error técnico si hay cambios concurrentes o falla el borrado. En todos los casos se revierte la transacción completa.
-- Origen: declarado.
-
-**Operaciones internas (no forman parte del contrato público)**
-
-| Firma y visibilidad | Descripción | Excepciones |
-| --- | --- | --- |
-| `private void validarId(Long id)` | Rechaza ID nulo o menor o igual que cero. | `IllegalArgumentException` |
-| `private Producto buscarExistente(Long id)` | `findById(id).orElseThrow(...)`: interpreta el `Optional` vacío. | `ProductoNoEncontradoException` |
-| `private String validarNombre(String nombre)` | Rechaza nulo; aplica `strip()`; exige de 1 a 100 caracteres; devuelve el nombre recortado. | `IllegalArgumentException` |
-| `private BigDecimal validarPrecio(BigDecimal precio)` | Rechaza nulo, fuera de 0–99999999.99 o con más de dos decimales significativos (`precio.stripTrailingZeros().scale() > 2`, de modo que `10.500` es válido y `10.505` no). Devuelve el valor con `setScale(2, RoundingMode.UNNECESSARY)`, que nunca redondea porque ya se comprobó. | `IllegalArgumentException` |
-| `private Set<Long> validarSeleccion(List<Long> ids)` | Rechaza lista nula o vacía y elementos nulos o no positivos; devuelve un `LinkedHashSet` (sin repetidos, conservando el orden). | `IllegalArgumentException` |
-
-#### Mensajes de validación propuestos
-| Caso | Mensaje |
+| Dato | Definición |
 | --- | --- |
-| ID nulo o no positivo | «El ID del producto debe ser un número positivo». |
-| Nombre nulo, vacío o solo espacios | «El nombre es obligatorio». |
-| Nombre de más de 100 caracteres | «El nombre no puede exceder 100 caracteres». |
-| Precio nulo | «El precio es obligatorio». |
-| Precio fuera de rango | «El precio debe estar entre 0 y 99999999.99». |
-| Precio con más de dos decimales | «El precio admite como máximo dos decimales». |
-| Selección nula o vacía | «Selecciona al menos un producto» (texto fijado por el contrato). |
-| Selección con elementos inválidos | «La selección contiene IDs no válidos». |
+| Tipo | Clase. |
+| Paquete | `com.equipo.gestorproductos.service` |
+| Componente | Gestión de productos. |
 
-#### Garantía de la eliminación múltiple
-`eliminarSeleccionados` se ejecuta dentro de **una sola transacción** (`@Transactional` en la clase; los errores previstos son `RuntimeException`, por lo que Spring hace rollback automáticamente). Pasos:
+Concentra la lógica de negocio del catálogo: valida y normaliza el nombre y el precio, comprueba que los productos existan, coordina las operaciones con `ProductoRepository` y define los límites transaccionales. Interpreta los resultados del repositorio (un `Optional` vacío o menos registros de los solicitados). No conoce rutas, plantillas ni mensajes flash. Se anota con `@Service` y `@Transactional` a nivel de clase; `listar` y `obtenerPorId` usan `@Transactional(readOnly = true)`.
 
-1. Validar la selección y quitar repetidos (`validarSeleccion`). Si falla, no se toca la base de datos.
-2. Cargar los productos con `findAllById(ids)`. Quedan como entidades gestionadas en la transacción.
-3. Si se devolvieron menos registros que IDs distintos, localizar el primer ID faltante y lanzar `ProductoNoEncontradoException(id)`. No se ha borrado nada, y aunque se hubiera borrado, el rollback lo deshace.
-4. Llamar a `deleteAll(productos)` con las entidades ya cargadas, en la misma transacción.
+**Dependencias y relaciones**
 
-Por qué no hay borrados parciales:
-- No se ignoran IDs faltantes; basta uno para rechazar toda la operación.
-- Las eliminaciones se confirman todas juntas al terminar la transacción. Si algo falla, se descartan todas.
-- **Cambios concurrentes:** otro usuario podría borrar un producto entre el paso 2 y la confirmación. Como las entidades están gestionadas en esa misma transacción, `delete` no se convierte en una operación vacía; Hibernate emite el `DELETE` y, al comprobar que no afectó ninguna fila, lanza una excepción que Spring traduce a `ObjectOptimisticLockingFailureException`. Esa excepción revierte la transacción completa. Por eso la carga y el borrado **deben quedar en la misma transacción** y no repartirse entre llamadas separadas al repositorio.
-- No se agrega columna de versión ni consultas con bloqueo: el contrato exige que la tabla sea la acordada y que no haya métodos personalizados inicialmente. La implementación debe cubrir este escenario con una prueba.
-- La excepción técnica puede aparecer al confirmar la transacción, es decir, al salir del método. Para el llamador el efecto es el mismo: la excepción llega y no queda nada borrado.
+| Clase o interfaz relacionada | Relación y propósito |
+| --- | --- |
+| `ProductoRepository` | Asociación dirigida mediante el atributo `productoRepository`, inyectado por constructor. Requiere `findAll(Sort)` (Persistencia de productos · IP-01), `findById` (IP-02), `findAllById` (IP-03), `save` (IP-04), `delete` (IP-05) y `deleteAll` (IP-06). |
+| `Producto` | Dependencia de uso: es la entidad que se crea, modifica, consulta y devuelve. |
+| `ProductoNoEncontradoException` | Dependencia «lanza»: señala un producto inexistente. |
+| `Sort` (Spring Data) | Dependencia de uso: define el orden ascendente por ID de `listar`. |
+| `ProductoController` | Es usada por el controlador de Fabio, que consume `listar` (IG-01), `obtenerPorId` (IG-02), `crear` (IG-03), `actualizar` (IG-04), `eliminar` (IG-05) y `eliminarSeleccionados` (IG-06). |
 
----
+**Atributos**
 
-### ProductoRepository
-- Tipo: interfaz.
-- Paquete: `com.equipo.gestorproductos.repository`
-- Componente: Persistencia de productos.
-- Descripción y responsabilidad: acceso a la tabla `productos` mediante Spring Data JPA. Extiende `JpaRepository<Producto, Long>`; Spring genera la implementación en tiempo de ejecución. Inicialmente no declara métodos propios. Solo ofrece acceso a datos: no valida reglas de negocio ni decide qué hacer con resultados ausentes, tarea que corresponde al servicio.
+| Nombre | Tipo | Visibilidad | Valor inicial o asignación | Descripción |
+| --- | --- | --- | --- | --- |
+| `productoRepository` | `ProductoRepository` | `private final` | Inyectado mediante el constructor. | Acceso a los datos de los productos. |
+| `NOMBRE_MAX_LONGITUD` | `int` | `private static final` | `100` | Longitud máxima del nombre, tras recortarlo. |
+| `PRECIO_MAXIMO` | `BigDecimal` | `private static final` | `new BigDecimal("99999999.99")` | Precio máximo permitido; el mínimo es cero. |
+| `PRECIO_ESCALA_MAXIMA` | `int` | `private static final` | `2` | Máximo de decimales del precio, según la escala del valor recibido. |
+| `MSG_ID_INVALIDO` | `String` | `private static final` | `"El ID del producto debe ser un número positivo"` | ID nulo o no positivo. |
+| `MSG_NOMBRE_OBLIGATORIO` | `String` | `private static final` | `"El nombre es obligatorio"` | Nombre nulo, vacío o solo espacios. |
+| `MSG_NOMBRE_LARGO` | `String` | `private static final` | `"El nombre no puede exceder 100 caracteres"` | Nombre de más de 100 caracteres tras recortarlo. |
+| `MSG_PRECIO_OBLIGATORIO` | `String` | `private static final` | `"El precio es obligatorio"` | Precio nulo. |
+| `MSG_PRECIO_RANGO` | `String` | `private static final` | `"El precio debe estar entre 0 y 99999999.99"` | Precio negativo o mayor que el máximo. |
+| `MSG_PRECIO_DECIMALES` | `String` | `private static final` | `"El precio admite como máximo dos decimales"` | Precio con escala mayor que dos. |
+| `MSG_SELECCION_VACIA` | `String` | `private static final` | `"Selecciona al menos un producto"` | Selección nula o vacía. |
+| `MSG_SELECCION_INVALIDA` | `String` | `private static final` | `"La selección contiene IDs no válidos"` | Elemento nulo o no positivo en la selección. |
 
-```java
-public interface ProductoRepository
-        extends JpaRepository<Producto, Long> {
-}
-```
+**Operaciones**
 
-#### Dependencias y relaciones
-| Clase/interfaz | Tipo de relación | Propósito |
+| Firma completa | Descripción | Componente e interfaz de salida |
 | --- | --- | --- |
-| `JpaRepository<Producto, Long>` | Generalización (extiende) | Aporta las operaciones CRUD, de orden y de consulta heredadas. |
-| `Producto` | Dependencia (argumento de tipo `T`) | Entidad gestionada. |
-| `Long` | Dependencia (argumento de tipo `ID`) | Tipo de la clave primaria. |
-| `ProductoService` | Es usada por (asociación dirigida desde el servicio) | Único consumidor del repositorio. |
+| `public ProductoService(ProductoRepository productoRepository)` | Inicializa el servicio con el repositorio que Spring administra. | No aplica |
+| `public List<Producto> listar()` | Consulta con `findAll(Sort.by(Sort.Direction.ASC, "id"))` (IP-01). Devuelve los productos por ID ascendente; lista vacía si no hay ninguno, nunca nula. Transacción de solo lectura. | Gestión de productos · IG-01 |
+| `public Producto obtenerPorId(Long id)` | Valida el ID, lo busca con `findById` (IP-02) y devuelve el producto. Lanza `IllegalArgumentException` si el ID es inválido y `ProductoNoEncontradoException` si no existe. Transacción de solo lectura. | Gestión de productos · IG-02 |
+| `public Producto crear(String nombre, BigDecimal precio)` | Valida y recorta el nombre, valida el precio, crea un `Producto` con ID nulo y lo guarda con `save` (IP-04). Devuelve el producto con el ID generado. Lanza `IllegalArgumentException` si el nombre o el precio son inválidos. | Gestión de productos · IG-03 |
+| `public Producto actualizar(Long id, String nombre, BigDecimal precio)` | Valida el ID, comprueba que el producto exista, valida nombre y precio, modifica la instancia ya cargada y la guarda con `save` (IP-04). Conserva el ID y nunca crea un producto sustituto. Lanza `IllegalArgumentException` si el ID, el nombre o el precio son inválidos y `ProductoNoEncontradoException` si el producto no existe. | Gestión de productos · IG-04 |
+| `public void eliminar(Long id)` | Valida el ID, comprueba que el producto exista con `findById` (IP-02) y lo elimina con `delete` (IP-05). Lanza `IllegalArgumentException` si el ID es inválido y `ProductoNoEncontradoException` si no existe. | Gestión de productos · IG-05 |
+| `public void eliminarSeleccionados(List<Long> ids)` | Valida la selección, carga los productos con `findAllById` (IP-03) y los elimina con `deleteAll` (IP-06), todo en una sola transacción. Lanza `IllegalArgumentException` si la selección es vacía o inválida y `ProductoNoEncontradoException` si falta algún ID. Ver «Eliminación múltiple en una sola transacción». | Gestión de productos · IG-06 |
+| `private void validarId(Long id)` | Rechaza un ID nulo o menor o igual que cero con `MSG_ID_INVALIDO`. | No aplica |
+| `private Producto buscarExistente(Long id)` | Busca con `findById` (IP-02) y lanza `ProductoNoEncontradoException(id)` si el resultado está vacío. | No aplica |
+| `private String validarNombre(String nombre)` | Rechaza un nombre nulo o vacío tras `strip()` y uno de más de 100 caracteres, contados en puntos de código como `VARCHAR(100)`. Devuelve el nombre recortado. | No aplica |
+| `private BigDecimal validarPrecio(BigDecimal precio)` | Rechaza un precio nulo, con `precio.scale()` mayor que dos o fuera de 0–99999999.99. Devuelve el valor con `setScale(2, RoundingMode.UNNECESSARY)`, que no redondea. | No aplica |
+| `private Set<Long> validarSeleccion(List<Long> ids)` | Rechaza una lista nula o vacía y los elementos nulos o no positivos. Devuelve un `LinkedHashSet` sin repetidos, en el orden recibido. | No aplica |
 
-#### Atributos
+**Reglas comunes**
+
+- **IDs:** deben ser no nulos y positivos. Un ID inválido lanza `IllegalArgumentException` con `MSG_ID_INVALIDO`.
+- **Nombre:** se recorta con `strip()` y debe tener de 1 a 100 caracteres. Se guarda ya recortado.
+- **Precio:** se verifica `precio.scale()` antes de normalizar. `10.500` y `10.505` se rechazan; `10.5` y `10.50` se aceptan y se guardan como `10.50`. Después se comprueba el rango de 0 a 99999999.99. Nunca se redondea una entrada inválida.
+- **Argumentos inválidos:** `IllegalArgumentException` con el mensaje de la constante `MSG_*` correspondiente. Las validaciones se aplican antes de guardar o eliminar.
+- **Producto inexistente:** `ProductoNoEncontradoException(id)`, con el mensaje «No se encontró el producto con ID {id}».
+- **Orden de comprobación en `actualizar`:** ID, existencia y, por último, nombre y precio. Si los datos son inválidos, no se modifica ni se guarda nada.
+- **Transacciones:** toda la clase es transaccional. Las excepciones previstas no son verificadas, por lo que revierten la transacción en la que se lanzan.
+- **Errores técnicos de persistencia:** el servicio no los convierte ni los oculta; se propagan a la presentación, que los atiende con un mensaje general sin detalles internos.
+
+**Eliminación múltiple en una sola transacción**
+
+1. Se valida la selección: lista nula o vacía, `MSG_SELECCION_VACIA` («Selecciona al menos un producto»); elemento nulo o no positivo, `MSG_SELECCION_INVALIDA`. Los IDs repetidos se procesan una sola vez.
+2. Se cargan los productos con `findAllById` (IP-03).
+3. Si se obtienen menos productos que IDs distintos, se lanza `ProductoNoEncontradoException` con el primer ID faltante en el orden recibido. No se ha borrado nada.
+4. Se eliminan los productos cargados con `deleteAll` (IP-06) dentro de la misma transacción.
+
+Como la carga y el borrado ocurren en una sola transacción, un fallo en cualquier punto revierte toda la operación y no queda un borrado parcial. `ProductoServiceIntegracionTest` comprueba en MySQL que, si el borrado falla después de ejecutar al menos una eliminación, esas eliminaciones se revierten y los demás productos permanecen en la tabla.
+
+**Llamadas al repositorio, en orden**
+
+| Operación del servicio | Llamadas a `ProductoRepository` | Alternativas |
+| --- | --- | --- |
+| `listar()` | `findAll(Sort)` | Sin productos: lista vacía. |
+| `obtenerPorId(id)` | `findById(id)` | ID inválido: `IllegalArgumentException`, sin consultar. `Optional` vacío: `ProductoNoEncontradoException`. |
+| `crear(nombre, precio)` | `save(producto)` | Datos inválidos: `IllegalArgumentException`, sin guardar. |
+| `actualizar(id, nombre, precio)` | `findById(id)` y luego `save(producto)` | ID inválido: `IllegalArgumentException`, sin consultar. Inexistente: `ProductoNoEncontradoException`, sin guardar. Datos inválidos: `IllegalArgumentException`, sin guardar. |
+| `eliminar(id)` | `findById(id)` y luego `delete(producto)` | ID inválido: `IllegalArgumentException`. Inexistente: `ProductoNoEncontradoException`, sin eliminar. |
+| `eliminarSeleccionados(ids)` | `findAllById(ids sin repetidos)` y luego `deleteAll(productos)` | Selección vacía o inválida: `IllegalArgumentException`, sin consultar. Falta algún ID: `ProductoNoEncontradoException`, sin eliminar. Fallo posterior: reversión completa. |
+
+#### ProductoRepository
+
+| Dato | Definición |
+| --- | --- |
+| Tipo | Interfaz. |
+| Paquete | `com.equipo.gestorproductos.repository` |
+| Componente | Persistencia de productos. |
+
+Da acceso a la tabla `productos` mediante Spring Data JPA; Spring genera su implementación en tiempo de ejecución. Extiende `JpaRepository<Producto, Long>` y no declara métodos propios. Solo accede a los datos: la validación y la interpretación de los resultados ausentes corresponden a `ProductoService`.
+
+**Dependencias y relaciones**
+
+| Clase o interfaz relacionada | Relación y propósito |
+| --- | --- |
+| `JpaRepository<Producto, Long>` | Generalización: de ella hereda las operaciones de consulta, guardado y eliminación. |
+| `Producto` | Dependencia por argumento de tipo: es la entidad que gestiona. |
+| `Long` | Dependencia por argumento de tipo: es el tipo de la clave primaria. |
+| `ProductoService` | Es usada por el servicio, que consume sus operaciones heredadas (IP-01 a IP-06). |
+
+**Atributos**
+
 No aplica: la interfaz no declara atributos.
 
-#### Operaciones
-Todas son heredadas; no hay operaciones declaradas en la interfaz. Se documentan las relevantes. Las firmas se expresan con `T = Producto` e `ID = Long`. Todas son públicas (miembros de interfaz) y participan en la transacción del servicio que las llama.
+**Operaciones**
 
-**findAll(Sort)**
-- Firma y visibilidad: `public List<Producto> findAll(Sort sort)`
-- Descripción: devuelve todos los productos con el orden indicado.
-- Parámetros: `sort` (`Sort`): criterio de orden (el servicio usa `Sort.by(Sort.Direction.ASC, "id")`).
-- Retorno: `List<Producto>`; vacía si no hay registros.
-- Servicio e interfaz del componente que implementa: consulta de productos de la interfaz de salida de Persistencia de productos.
-- Precondiciones: `sort` no nulo; la propiedad indicada existe en `Producto`.
-- Resultado esperado: productos ordenados.
-- Excepciones previstas: `DataAccessException` ante fallos técnicos.
-- Origen: heredado (`ListPagingAndSortingRepository`, a través de `JpaRepository`).
+Origen: todas las operaciones son heredadas de `JpaRepository`; la interfaz no declara ninguna. Se listan las que usa el servicio, con `T = Producto` e `ID = Long`.
 
-**findById(Long)**
-- Firma y visibilidad: `public Optional<Producto> findById(Long id)`
-- Descripción: busca un producto por su clave primaria.
-- Parámetros: `id` (`Long`): ID buscado; no nulo.
-- Retorno: `Optional<Producto>`; **vacío si no existe**. El servicio lo interpreta y lanza `ProductoNoEncontradoException`.
-- Servicio e interfaz del componente que implementa: consulta por ID de la interfaz de salida de Persistencia de productos.
-- Precondiciones: `id` no nulo.
-- Resultado esperado: producto o `Optional` vacío.
-- Excepciones previstas: `IllegalArgumentException` si `id` es nulo (el servicio lo valida antes); `DataAccessException`.
-- Origen: heredado (`CrudRepository`).
-
-**findAllById(Iterable<Long>)**
-- Firma y visibilidad: `public List<Producto> findAllById(Iterable<Long> ids)`
-- Descripción: recupera los productos cuyos IDs se indican.
-- Parámetros: `ids` (`Iterable<Long>`): IDs buscados, sin nulos ni repetidos.
-- Retorno: `List<Producto>`; **puede tener menos elementos que IDs solicitados** (los inexistentes se omiten sin error) y no garantiza el orden de entrada. El servicio compara los resultados con la solicitud.
-- Servicio e interfaz del componente que implementa: consulta múltiple de la interfaz de salida de Persistencia de productos.
-- Precondiciones: `ids` no nulo.
-- Resultado esperado: los productos existentes entre los solicitados.
-- Excepciones previstas: `DataAccessException`.
-- Origen: heredado (`ListCrudRepository`).
-
-**save(Producto)**
-- Firma y visibilidad: `public <S extends Producto> S save(S entity)`
-- Descripción: inserta si el ID es nulo (la base genera el ID y se copia al objeto) o actualiza/fusiona si ya tiene ID.
-- Parámetros: `entity` (`S extends Producto`): entidad a guardar, no nula.
-- Retorno: la instancia guardada; el servicio debe usar **el valor devuelto**, no el argumento.
-- Servicio e interfaz del componente que implementa: guardado de producto de la interfaz de salida de Persistencia de productos.
-- Precondiciones: entidad no nula, con datos ya validados por el servicio.
-- Resultado esperado: fila insertada o modificada.
-- Excepciones previstas: `DataAccessException` (por ejemplo, violación de restricciones de la tabla).
-- Origen: heredado (`CrudRepository`).
-
-**delete(Producto)**
-- Firma y visibilidad: `public void delete(Producto entity)`
-- Descripción: elimina la entidad indicada.
-- Parámetros: `entity` (`Producto`): entidad a eliminar, no nula.
-- Retorno: `void`.
-- Servicio e interfaz del componente que implementa: baja de producto de la interfaz de salida de Persistencia de productos.
-- Precondiciones: entidad no nula, obtenida antes en la misma transacción. Si la entidad no está gestionada y no existe en la base, Spring Data trata la llamada como operación vacía sin avisar, por lo que la existencia debe comprobarla el servicio.
-- Resultado esperado: fila eliminada.
-- Excepciones previstas: `DataAccessException`; `ObjectOptimisticLockingFailureException` si la fila desapareció antes del borrado efectivo.
-- Origen: heredado (`CrudRepository`).
-
-**deleteAll(Iterable<Producto>)**
-- Firma y visibilidad: `public void deleteAll(Iterable<? extends Producto> entities)`
-- Descripción: elimina las entidades indicadas, una por una, dentro de la transacción en curso.
-- Parámetros: `entities` (`Iterable<? extends Producto>`): entidades a eliminar, no nulas.
-- Retorno: `void`.
-- Servicio e interfaz del componente que implementa: baja múltiple de la interfaz de salida de Persistencia de productos.
-- Precondiciones: se invoca dentro de la transacción de `eliminarSeleccionados`, con entidades cargadas en ella.
-- Resultado esperado: todas las filas eliminadas al confirmarse la transacción; ninguna si esta se revierte.
-- Excepciones previstas: `DataAccessException`; `ObjectOptimisticLockingFailureException` ante cambios concurrentes.
-- Origen: heredado (`CrudRepository`).
-
----
-
-### Producto
-- Tipo: clase (entidad JPA).
-- Paquete: `com.equipo.gestorproductos.model`
-- Componente: modelo compartido por Gestión de productos y Persistencia de productos (también lo usan la presentación y la persistencia).
-- Descripción y responsabilidad: representa un producto del catálogo y su correspondencia con la fila de la tabla `productos` de la base `gestor_productos`. Es un objeto de datos: no contiene lógica de negocio ni validaciones; estas viven en el servicio (y el formulario las repite). Se anota con `@Entity` y `@Table(name = "productos")` (Jakarta Persistence). El mapeo es explícito porque `ddl-auto=none`: la tabla se crea mediante script SQL y la entidad debe coincidir con ella. Montos en pesos mexicanos (MXN); se permiten nombres repetidos.
-
-#### Dependencias y relaciones
-| Clase/interfaz | Tipo de relación | Propósito |
+| Firma completa | Descripción | Componente e interfaz de salida |
 | --- | --- | --- |
-| Tabla `productos` (MySQL) | Correspondencia objeto-relacional (JPA) | Cada instancia equivale a una fila. |
-| `ProductoService` | Es usada por (dependencia desde el servicio) | Crea, modifica y devuelve productos. |
-| `ProductoRepository` | Es gestionada por (argumento de tipo) | Persiste y consulta instancias. |
-| `ProductoController` y vistas (Fabio) | Es usada por | Transporta datos entre formulario, listado y servicio. |
-| `BigDecimal`, `Long`, `String` | Asociación con tipos del JDK | Tipos de los atributos. |
+| `List<Producto> findAll(Sort sort)` | Recupera todos los productos con el orden indicado; lista vacía si no hay registros. | Persistencia de productos · IP-01 |
+| `Optional<Producto> findById(Long id)` | Busca un producto por su clave primaria. Devuelve un `Optional` vacío cuando no existe; el servicio lo interpreta. | Persistencia de productos · IP-02 |
+| `List<Producto> findAllById(Iterable<Long> ids)` | Recupera los productos existentes entre los IDs recibidos. Puede devolver menos registros que IDs solicitados; el servicio compara el resultado. | Persistencia de productos · IP-03 |
+| `<S extends Producto> S save(S entity)` | Inserta el producto si su ID es nulo (MySQL genera el ID) o actualiza el existente. Devuelve el producto guardado. | Persistencia de productos · IP-04 |
+| `void delete(Producto entity)` | Elimina el registro del producto recibido. | Persistencia de productos · IP-05 |
+| `void deleteAll(Iterable<? extends Producto> entities)` | Elimina los registros de los productos recibidos dentro de la transacción en curso. | Persistencia de productos · IP-06 |
 
-#### Atributos
-| Nombre | Tipo | Visibilidad | Valor inicial/asignación | Descripción |
-| --- | --- | --- | --- | --- |
-| `id` | `Long` | private | `null` hasta guardar; lo genera MySQL (`@Id`, `@GeneratedValue(strategy = GenerationType.IDENTITY)`). | Clave primaria `BIGINT` autoincremental. No editable por el usuario. |
-| `nombre` | `String` | private | `null`; lo asigna el servicio ya recortado (`@Column(name = "nombre", nullable = false, length = 100)`). | `VARCHAR(100)`, obligatorio, de 1 a 100 caracteres tras recortar. Puede repetirse. |
-| `precio` | `BigDecimal` | private | `null`; lo asigna el servicio con escala 2 (`@Column(name = "precio", nullable = false, precision = 10, scale = 2)`). | `DECIMAL(10,2)`, obligatorio, entre 0 y 99999999.99, en MXN. |
+Las operaciones son públicas por ser miembros de una interfaz. No se requieren métodos personalizados inicialmente. Los fallos técnicos de acceso a datos llegan al servicio como excepciones de Spring y no se convierten en este nivel.
 
-#### Operaciones
+#### Producto
 
-**Constructor sin argumentos**
-- Firma y visibilidad: `public Producto()`
-- Descripción: crea un producto vacío; exigido por JPA y usado por el servicio al crear. Es el único constructor previsto.
-- Parámetros: ninguno.
-- Retorno: no aplica (constructor).
-- Servicio e interfaz del componente que implementa: no aplica.
-- Precondiciones: ninguna.
-- Resultado esperado: instancia con `id`, `nombre` y `precio` en `null`; el ID permanece nulo hasta guardarlo.
-- Excepciones previstas: ninguna.
-- Origen: declarado.
-
-**getId / setId**
-- Firma y visibilidad: `public Long getId()` y `public void setId(Long id)`
-- Descripción: lectura y asignación del identificador. `setId` existe por el contrato de getters/setters y por JPA, pero el usuario no puede capturar ni modificar el ID: el servicio nunca lo recibe desde el formulario ni lo asigna en `crear` o `actualizar`.
-- Parámetros: `id` (`Long`): identificador.
-- Retorno: `getId` devuelve `Long` (`null` si aún no se guardó); `setId` devuelve `void`.
-- Servicio e interfaz del componente que implementa: no aplica.
-- Precondiciones: ninguna.
-- Resultado esperado: se lee o asigna el valor sin transformarlo.
-- Excepciones previstas: ninguna.
-- Origen: declarado.
-
-**getNombre / setNombre**
-- Firma y visibilidad: `public String getNombre()` y `public void setNombre(String nombre)`
-- Descripción: lectura y asignación del nombre. La clase no recorta ni valida; eso lo hace el servicio.
-- Parámetros: `nombre` (`String`): nombre del producto.
-- Retorno: `getNombre` devuelve `String`; `setNombre` devuelve `void`.
-- Servicio e interfaz del componente que implementa: no aplica.
-- Precondiciones: ninguna a nivel de la clase; las reglas del modelo se verifican antes en el servicio.
-- Resultado esperado: se lee o asigna el valor sin transformarlo.
-- Excepciones previstas: ninguna.
-- Origen: declarado.
-
-**getPrecio / setPrecio**
-- Firma y visibilidad: `public BigDecimal getPrecio()` y `public void setPrecio(BigDecimal precio)`
-- Descripción: lectura y asignación del precio. No redondea; cualquier valor inválido se rechaza antes en el servicio.
-- Parámetros: `precio` (`BigDecimal`): precio en MXN.
-- Retorno: `getPrecio` devuelve `BigDecimal`; `setPrecio` devuelve `void`.
-- Servicio e interfaz del componente que implementa: no aplica.
-- Precondiciones: ninguna a nivel de la clase.
-- Resultado esperado: se lee o asigna el valor sin transformarlo.
-- Excepciones previstas: ninguna.
-- Origen: declarado.
-
-> `equals`, `hashCode` y `toString` no forman parte del contrato; si se añaden durante el desarrollo, se documentarán en la ficha.
-
----
-
-### ProductoNoEncontradoException
-- Tipo: excepción (no verificada).
-- Paquete: `com.equipo.gestorproductos.exception`
-- Componente: Gestión de productos.
-- Descripción y responsabilidad: indica que se intentó abrir para edición, modificar o eliminar un producto que no existe. La lanza únicamente `ProductoService`; el manejador web que la convierte en una respuesta comprensible (con opción de volver al listado) lo documenta e implementa Fabio. Al ser `RuntimeException`, provoca el rollback de la transacción donde se lanza.
-
-#### Dependencias y relaciones
-| Clase/interfaz | Tipo de relación | Propósito |
-| --- | --- | --- |
-| `RuntimeException` | Generalización (extiende) | Excepción no verificada; no obliga a declarar `throws`. |
-| `ProductoService` | Es usada por (la lanza) | Señala productos inexistentes en `obtenerPorId`, `actualizar`, `eliminar` y `eliminarSeleccionados`. |
-| `ProductoExceptionHandler` (Fabio) | Es capturada por | Muestra el error y permite regresar al listado. |
-
-#### Atributos
-No aplica: no declara atributos propios (el ID solo forma parte del mensaje). Solo se prevé `private static final long serialVersionUID = 1L`, por ser serializable.
-
-#### Operaciones
-
-**Constructor**
-- Firma y visibilidad: `public ProductoNoEncontradoException(Long id)`
-- Descripción: crea la excepción con el mensaje «No se encontró el producto con ID {id}», sustituyendo `{id}` por el valor recibido.
-- Parámetros: `id` (`Long`): ID que no se localizó.
-- Retorno: no aplica (constructor).
-- Servicio e interfaz del componente que implementa: no aplica.
-- Precondiciones: ninguna; el servicio pasa el ID que no se encontró.
-- Resultado esperado: excepción con el mensaje indicado, accesible con `getMessage()`.
-- Excepciones previstas: ninguna.
-- Origen: declarado.
-
-**getMessage**
-- Firma y visibilidad: `public String getMessage()`
-- Descripción: devuelve el mensaje de la excepción. No se sobrescribe: el constructor lo pasa a `super(...)`.
-- Parámetros: ninguno.
-- Retorno: `String` con el mensaje «No se encontró el producto con ID {id}».
-- Servicio e interfaz del componente que implementa: no aplica.
-- Precondiciones: ninguna.
-- Resultado esperado: texto que el manejador web puede mostrar.
-- Excepciones previstas: ninguna.
-- Origen: heredado (`Throwable`).
-
----
-
-## Insumos para el diagrama general de clases (6.2)
-
-Resumen entregado a Said:
-
-| Origen | Relación | Destino |
-| --- | --- | --- |
-| `ProductoService` | Asociación dirigida (`productoRepository`) | `ProductoRepository` |
-| `ProductoService` | Dependencia («use») | `Producto` |
-| `ProductoService` | Dependencia («throws») | `ProductoNoEncontradoException` |
-| `ProductoRepository` | Generalización (extiende) | `JpaRepository<Producto, Long>` |
-| `ProductoRepository` | Dependencia (argumento de tipo) | `Producto` |
-| `ProductoNoEncontradoException` | Generalización | `RuntimeException` |
-| `ProductoController` (Fabio) | Asociación dirigida | `ProductoService` |
-| `Producto` | Mapeo JPA | Tabla `productos` |
-
-## Llamadas servicio → repositorio para las secuencias (8)
-
-Insumo para Valeria; incluye las alternativas relevantes de cada operación.
-
-| Operación del servicio | Llamadas a `ProductoRepository`, en orden | Alternativas |
-| --- | --- | --- |
-| `listar()` | `findAll(Sort ID ascendente)` | Sin productos: lista vacía, no error. |
-| `obtenerPorId(id)` | `findById(id)` | `Optional` vacío → `ProductoNoEncontradoException`. ID inválido → `IllegalArgumentException`, sin llamar al repositorio. |
-| `crear(nombre, precio)` | `save(producto nuevo)` | Datos inválidos → `IllegalArgumentException`, sin llamar al repositorio. |
-| `actualizar(id, nombre, precio)` | `findById(id)` y luego `save(producto cargado)` | Inexistente → `ProductoNoEncontradoException`. Datos inválidos → `IllegalArgumentException`, sin `save`. |
-| `eliminar(id)` | `findById(id)` y luego `delete(producto)` | Inexistente → `ProductoNoEncontradoException`, sin `delete`. |
-| `eliminarSeleccionados(ids)` | `findAllById(ids sin repetidos)` y luego `deleteAll(productos)` | Selección vacía → `IllegalArgumentException("Selecciona al menos un producto")`, sin llamar al repositorio. Faltan IDs → `ProductoNoEncontradoException`, sin `deleteAll`. Fallo o cambio concurrente → rollback completo y error técnico sin detalles internos en pantalla. |
-
-## Puntos por confirmar
-
-| Con quién | Tema |
+| Dato | Definición |
 | --- | --- |
-| Said | Su sección 7 debe coincidir con la entidad: `id BIGINT` autoincremental (clave primaria), `nombre VARCHAR(100) NOT NULL`, `precio DECIMAL(10,2) NOT NULL`. El script SQL de la tabla se desarrollará después, en la etapa de persistencia, con `ddl-auto=none`; `sql/00-crear-base.sql` solo crea la base. |
-| Said | Nombres exactos de las interfaces de salida de los componentes (4.2 y 4.3) para completar el campo «Servicio e interfaz del componente que implementa». |
-| Fabio | Las firmas públicas del servicio no cambian. `ProductoExceptionHandler` y el controlador deben cubrir `IllegalArgumentException`, `ProductoNoEncontradoException` y errores técnicos de Spring (por ejemplo, `ObjectOptimisticLockingFailureException` en cambios concurrentes), que el servicio no convierte. Los mensajes de validación propuestos son un texto base que se puede ajustar. |
-| Valeria | Las llamadas servicio → repositorio de la tabla anterior son las que deben aparecer en las secuencias. Orden de comprobaciones en `actualizar`: ID válido, existencia del producto y después nombre y precio, tal como lo enumera el contrato. En `crear` se validan los datos antes de guardar. |
+| Tipo | Clase (entidad JPA). |
+| Paquete | `com.equipo.gestorproductos.model` |
+| Componente | Modelo compartido por Presentación web, Gestión de productos y Persistencia de productos. |
+
+Representa un producto del catálogo y establece la correspondencia con una fila de la tabla `productos` de la base `gestor_productos`. Es un objeto de datos: no valida ni recorta valores, tarea que corresponde al servicio. Se anota con `@Entity` y `@Table(name = "productos")` (Jakarta Persistence). Su estructura coincide con la sección 7 de `said.md` y con `sql/01-crear-tabla-productos.sql`. Los precios están en MXN y los nombres pueden repetirse.
+
+**Dependencias y relaciones**
+
+| Clase o interfaz relacionada | Relación y propósito |
+| --- | --- |
+| Tabla `productos` (MySQL) | Correspondencia objeto-relacional mediante JPA: cada instancia equivale a una fila. |
+| `ProductoRepository` | Es la entidad gestionada por el repositorio. |
+| `ProductoService` | Es creada, modificada y devuelta por el servicio. |
+| `ProductoController` | Es el producto que el controlador muestra y captura; solo `nombre` y `precio` son enlazables. |
+
+**Atributos**
+
+| Nombre | Tipo | Visibilidad | Valor inicial o asignación | Descripción |
+| --- | --- | --- | --- | --- |
+| `id` | `Long` | `private` | `null` hasta guardar; lo genera MySQL con `@Id` y `@GeneratedValue(strategy = GenerationType.IDENTITY)`. | Clave primaria `BIGINT` autoincremental; no editable. |
+| `nombre` | `String` | `private` | `null`; lo asigna el servicio ya recortado. Mapeado con `@Column(name = "nombre", nullable = false, length = 100)`. | `VARCHAR(100)`, obligatorio, de 1 a 100 caracteres. |
+| `precio` | `BigDecimal` | `private` | `null`; lo asigna el servicio con escala 2. Mapeado con `@Column(name = "precio", nullable = false, precision = 10, scale = 2)`. | `DECIMAL(10,2)`, obligatorio, de 0 a 99999999.99, en MXN. |
+
+**Operaciones**
+
+| Firma completa | Descripción | Componente e interfaz de salida |
+| --- | --- | --- |
+| `public Producto()` | Crea un producto con todos sus atributos en `null`; JPA lo exige. Es el único constructor. | No aplica |
+| `public Long getId()` | Devuelve el ID; `null` si aún no se guardó. | No aplica |
+| `public void setId(Long id)` | Asigna el ID. El usuario no puede capturarlo ni modificarlo; el servicio nunca lo asigna a partir de datos del formulario. | No aplica |
+| `public String getNombre()` | Devuelve el nombre. | No aplica |
+| `public void setNombre(String nombre)` | Asigna el nombre sin validarlo ni recortarlo. | No aplica |
+| `public BigDecimal getPrecio()` | Devuelve el precio. | No aplica |
+| `public void setPrecio(BigDecimal precio)` | Asigna el precio sin validarlo ni redondearlo. | No aplica |
+
+`equals`, `hashCode` y `toString` no están definidos; se usan los de `Object`.
+
+#### ProductoNoEncontradoException
+
+| Dato | Definición |
+| --- | --- |
+| Tipo | Excepción (no verificada). |
+| Paquete | `com.equipo.gestorproductos.exception` |
+| Componente | Gestión de productos. |
+
+Indica que se intentó consultar, modificar o eliminar un producto que no existe. La lanza `ProductoService`; el controlador de Fabio la deja salir y `ProductoExceptionHandler` la convierte en una redirección al listado con su mensaje. Al ser `RuntimeException`, revierte la transacción en la que se lanza.
+
+**Dependencias y relaciones**
+
+| Clase o interfaz relacionada | Relación y propósito |
+| --- | --- |
+| `RuntimeException` | Generalización: excepción no verificada, que no obliga a declarar `throws`. |
+| `ProductoService` | Es lanzada por el servicio en `obtenerPorId`, `actualizar`, `eliminar` y `eliminarSeleccionados`. |
+| `ProductoController` | Dependencia por propagación: la deja salir hacia el manejador. |
+| `ProductoExceptionHandler` | Es atendida por el manejador, que toma de ella el mensaje. |
+
+**Atributos**
+
+| Nombre | Tipo | Visibilidad | Valor inicial o asignación | Descripción |
+| --- | --- | --- | --- | --- |
+| `serialVersionUID` | `long` | `private static final` | `1L` | Versión de serialización de la excepción. |
+
+**Operaciones**
+
+| Firma completa | Descripción | Componente e interfaz de salida |
+| --- | --- | --- |
+| `public ProductoNoEncontradoException(Long id)` | Crea la excepción con el mensaje «No se encontró el producto con ID {id}». No guarda el ID en un atributo: el mensaje ya lo incorpora. | No aplica |
+| `public String getMessage()` | Devuelve el mensaje de la excepción. Heredada de `Throwable`; no se sobrescribe. | No aplica |
+
+### 6.2. Diagrama general de clases
+
+El siguiente diagrama es el general del proyecto. Reúne las clases de presentación de Fabio y las de Gestión y Persistencia de productos de Ramón, con sus atributos, operaciones y relaciones. En `ProductoRepository` se distinguen las operaciones heredadas de `JpaRepository`. El archivo editable de Astah es `../../diagramas/clases-presentacion.asta`.
+
+![Diagrama general de clases](../../diagramas/clases-presentacion.png)
+
+Relaciones de las clases de esta aportación. Las de `ProductoController` y `ProductoExceptionHandler` se describen en `fabio.md`.
+
+| Origen | Destino | Relación |
+| --- | --- | --- |
+| `ProductoService` | `ProductoRepository` | Asociación dirigida (`productoRepository`, 1 a 1). |
+| `ProductoService` | `Producto` | Dependencia «use». |
+| `ProductoService` | `ProductoNoEncontradoException` | Dependencia «lanza». |
+| `ProductoRepository` | `JpaRepository<Producto, Long>` | Generalización (extiende). |
+| `ProductoRepository` | `Producto` | Dependencia «gestiona». |
+| `ProductoNoEncontradoException` | `RuntimeException` | Generalización (extiende). |

@@ -84,6 +84,7 @@ IG-01, IG-02, IG-03, IG-04, IG-05 e IG-06, ofrecidas por Gestión de productos m
 - Modelo compartido `Producto.java`.
 - Plantillas `listado.html` y `formulario.html`.
 - Recursos `estilos.css` y `productos.js`.
+- `src/main/resources/messages.properties` contiene los mensajes en español que se muestran al validar el nombre y el precio, incluido el mensaje para un precio que no se puede convertir a número.
 - Spring MVC y Thymeleaf.
 
 ### 4.2. Gestión de productos
@@ -189,6 +190,7 @@ src/
     │       └── ProductoExceptionHandler.java
     └── resources/
         ├── application.properties
+        ├── messages.properties
         ├── templates/productos/
         │   ├── listado.html
         │   └── formulario.html
@@ -199,7 +201,7 @@ src/
                 └── productos.js
 ```
 
-El proyecto base ya contiene `GestorProductosApplication.java` y `application.properties`. Los demás archivos del árbol se incorporarán durante la implementación.
+El proyecto base aportó `GestorProductosApplication.java` y `application.properties`. La implementación de presentación incorpora las clases web, las plantillas, los recursos estáticos y el archivo de mensajes de validación.
 
 La plantilla `formulario.html` se utilizará para crear y editar productos, ajustando el título, los datos y la acción del formulario según la operación.
 
@@ -207,7 +209,7 @@ La plantilla `formulario.html` se utilizará para crear y editar productos, ajus
 
 | Componente | Archivos principales |
 | --- | --- |
-| Presentación web | `controller/ProductoController.java`, `exception/ProductoExceptionHandler.java`, las plantillas `listado.html` y `formulario.html`, y los recursos `estilos.css` y `productos.js`. |
+| Presentación web | `controller/ProductoController.java`, `exception/ProductoExceptionHandler.java`, las plantillas `listado.html` y `formulario.html`, los recursos `estilos.css` y `productos.js`, y los mensajes de validación en `messages.properties`. |
 | Gestión de productos | `service/ProductoService.java` y `exception/ProductoNoEncontradoException.java`. |
 | Persistencia de productos | `repository/ProductoRepository.java`, apoyado en el mapeo de `model/Producto.java`. |
 

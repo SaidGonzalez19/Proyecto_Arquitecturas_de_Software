@@ -48,7 +48,7 @@ La selección se realiza en el navegador y no envía solicitudes al servicio has
 | Guardar producto | Tras validar, el controlador llama a `crear(nombre, precio)`. |
 | Cancelar / Volver al listado | Abre `GET /productos` sin enviar una operación de guardado. |
 
-La captura del precio conservará el texto rechazado cuando no pueda convertirse a `BigDecimal`. Los controles del navegador complementan la validación en el servidor. Los valores con más de dos decimales se rechazan sin redondearlos.
+El formulario compartido de creación y edición usa `novalidate`, por lo que el navegador permite enviar los valores capturados sin ejecutar su validación nativa. En el servidor, Spring MVC convierte el precio a `BigDecimal` y `ProductoController` valida el nombre y el precio. Si hay errores, se devuelve el formulario en el mismo modo, con los mensajes junto a los campos y los datos capturados, incluso si el precio contiene texto como `doce`. Se aceptan `10.5` y `10.50`; se rechaza `10.500` porque supera los dos decimales permitidos.
 
 Si el guardado termina correctamente, se redirige a `/productos` y se muestra «Producto creado correctamente» mediante `mensajeExito` flash. Si hay errores de conversión, validación o reglas del servicio, o si falla la persistencia, se muestra el mismo formulario en modo creación conservando los valores capturados.
 
@@ -185,6 +185,7 @@ Recibe las acciones del catálogo, prepara las vistas, convierte y valida la cap
 | `productoService` | `ProductoService` | `private final` | Inyectado mediante el constructor. | Colaborador que ejecuta las operaciones de gestión de productos. |
 | `PRECIO_MAXIMO` | `BigDecimal` | `private static final` | `new BigDecimal("99999999.99")` | Límite superior del precio, sin aritmética de punto flotante. |
 | `MENSAJE_ERROR_PERSISTENCIA` | `String` | `private static final` | `"No fue posible completar la operación. Inténtalo de nuevo"` | Mensaje general tras un fallo de persistencia atendido en el controlador. |
+| `VOLVER_AL_LISTADO` | `String` | `private static final` | `"redirect:/productos"` | Destino que devuelve el controlador al redirigir al listado de productos. |
 
 **Operaciones**
 

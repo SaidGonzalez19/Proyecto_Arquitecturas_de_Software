@@ -247,7 +247,7 @@ El manejador solo reconoce `ProductoNoEncontradoException`, `DataAccessException
 
 ### 6.2. Diagrama general de clases
 
-La siguiente imagen muestra la aportación de Fabio: `ProductoController` y `ProductoExceptionHandler` con sus atributos, operaciones y relaciones, junto con las clases de Gestión de productos con las que colaboran. Said la integrará en el diagrama general. El archivo editable de Astah es `../../diagramas/clases-presentacion.asta`.
+La siguiente imagen muestra el diagrama general de clases del proyecto: `ProductoController` y `ProductoExceptionHandler` de Fabio, junto con `ProductoService`, `ProductoRepository`, `Producto` y `ProductoNoEncontradoException` de Ramón, con sus atributos, operaciones y relaciones. El archivo editable de Astah, `../../diagramas/clases-presentacion.asta`, contiene el diagrama conjunto. Las relaciones de las clases de Ramón se describen en su sección 6.2; la tabla siguiente recoge las de presentación.
 
 ![Clases de presentación](../../diagramas/clases-presentacion.png)
 
